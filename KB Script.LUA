@@ -8,6 +8,12 @@ local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
 local Camera = workspace.CurrentCamera
 
+-- Lock Status Variables
+local speedLocked = false
+local fovLocked = false
+local lockedSpeed = 16
+local lockedFOV = 70
+
 -- Language Settings
 local language = {
     chinese = {
@@ -42,7 +48,15 @@ local language = {
         speedSlowMode = "速度已设置为慢速模式 (8)",
         fovWideMode = "FOV已设置为广角模式 (90)",
         fovCompMode = "FOV已设置为竞技模式 (80)",
-        language = "语言"
+        language = "语言",
+        lockSpeed = "锁定速度",
+        unlockSpeed = "解锁速度",
+        lockFov = "锁定FOV",
+        unlockFov = "解锁FOV",
+        speedLocked = "速度已锁定",
+        speedUnlocked = "速度已解锁",
+        fovLocked = "FOV已锁定",
+        fovUnlocked = "FOV已解锁"
     },
     english = {
         windowTitle = "KB Script",
@@ -76,7 +90,15 @@ local language = {
         speedSlowMode = "Speed set to slow mode (8)",
         fovWideMode = "FOV set to wide angle mode (90)",
         fovCompMode = "FOV set to competitive mode (80)",
-        language = "Language"
+        language = "Language",
+        lockSpeed = "Lock Speed",
+        unlockSpeed = "Unlock Speed",
+        lockFov = "Lock FOV",
+        unlockFov = "Unlock FOV",
+        speedLocked = "Speed has been locked",
+        speedUnlocked = "Speed has been unlocked",
+        fovLocked = "FOV has been locked",
+        fovUnlocked = "FOV has been unlocked"
     }
 }
 
@@ -123,10 +145,12 @@ end)
 -- Speed settings section
 characterChannel:Label(getText("walkSpeedSettings"))
 characterChannel:Textbox(getText("inputSpeedPrompt"), "", false, function(value)
+    if speedLocked then return end
     local speed = tonumber(value)
     if speed and speed >= 0 and speed <= 100 then
         if Humanoid then
             Humanoid.WalkSpeed = speed
+            lockedSpeed = speed
         end
         DiscordLib:Notification(getText("notification"), getText("speedSetTo") .. speed, getText("confirm"))
     else
@@ -137,25 +161,52 @@ end)
 -- FOV settings section
 characterChannel:Label(getText("fovSettings"))
 characterChannel:Textbox(getText("inputFovPrompt"), "", false, function(value)
+    if fovLocked then return end
     local fov = tonumber(value)
     if fov and fov >= 10 and fov <= 120 then
         Camera.FieldOfView = fov
+        lockedFOV = fov
         DiscordLib:Notification(getText("notification"), getText("fovSetTo") .. fov, getText("confirm"))
     else
         DiscordLib:Notification(getText("error"), getText("invalidFov"), getText("confirm"))
     end
 end)
 
+-- Lock toggles
+characterChannel:Toggle(getText("lockSpeed"), false, function(value)
+    speedLocked = value
+    if speedLocked then
+        lockedSpeed = Humanoid.WalkSpeed
+        DiscordLib:Notification(getText("notification"), getText("speedLocked"), getText("confirm"))
+    else
+        DiscordLib:Notification(getText("notification"), getText("speedUnlocked"), getText("confirm"))
+    end
+end)
+
+characterChannel:Toggle(getText("lockFov"), false, function(value)
+    fovLocked = value
+    if fovLocked then
+        lockedFOV = Camera.FieldOfView
+        DiscordLib:Notification(getText("notification"), getText("fovLocked"), getText("confirm"))
+    else
+        DiscordLib:Notification(getText("notification"), getText("fovUnlocked"), getText("confirm"))
+    end
+end)
+
 -- Reset buttons
 characterChannel:Button(getText("resetSpeedButton"), function()
+    if speedLocked then return end
     if Humanoid then
         Humanoid.WalkSpeed = 16
+        lockedSpeed = 16
     end
     DiscordLib:Notification(getText("notification"), getText("speedReset"), getText("confirm"))
 end)
 
 characterChannel:Button(getText("resetFovButton"), function()
+    if fovLocked then return end
     Camera.FieldOfView = 70
+    lockedFOV = 70
     DiscordLib:Notification(getText("notification"), getText("fovReset"), getText("confirm"))
 end)
 
@@ -164,27 +215,35 @@ local presetsChannel = mainPage:Channel(getText("presets"))
 
 -- Speed presets
 presetsChannel:Button(getText("raceSpeed"), function()
+    if speedLocked then return end
     if Humanoid then
         Humanoid.WalkSpeed = 32
+        lockedSpeed = 32
     end
     DiscordLib:Notification(getText("notification"), getText("speedRaceMode"), getText("confirm"))
 end)
 
 presetsChannel:Button(getText("slowMode"), function()
+    if speedLocked then return end
     if Humanoid then
         Humanoid.WalkSpeed = 8
+        lockedSpeed = 8
     end
     DiscordLib:Notification(getText("notification"), getText("speedSlowMode"), getText("confirm"))
 end)
 
 -- FOV presets
 presetsChannel:Button(getText("wideAngleFov"), function()
+    if fovLocked then return end
     Camera.FieldOfView = 90
+    lockedFOV = 90
     DiscordLib:Notification(getText("notification"), getText("fovWideMode"), getText("confirm"))
 end)
 
 presetsChannel:Button(getText("competitiveFov"), function()
+    if fovLocked then return end
     Camera.FieldOfView = 80
+    lockedFOV = 80
     DiscordLib:Notification(getText("notification"), getText("fovCompMode"), getText("confirm"))
 end)
 
@@ -192,7 +251,7 @@ end)
 local infoChannel = mainPage:Channel(getText("info"))
 
 infoChannel:Label(getText("creator") .. "Baloksxin")
-infoChannel:Label(getText("version") .. "v1.0.2")
+infoChannel:Label(getText("version") .. "v1.0.3")
 infoChannel:Label(getText("updateTime") .. "2025-03-01")
 
 -- Update character reference when respawning
@@ -200,7 +259,19 @@ LocalPlayer.CharacterAdded:Connect(function(newCharacter)
     Character = newCharacter
     Humanoid = Character:WaitForChild("Humanoid")
     if Humanoid then
-        Humanoid.WalkSpeed = Humanoid.WalkSpeed
+        if speedLocked then
+            Humanoid.WalkSpeed = lockedSpeed
+        end
+    end
+end)
+
+-- Lock maintenance
+game:GetService("RunService").Heartbeat:Connect(function()
+    if speedLocked and Humanoid and Humanoid.WalkSpeed ~= lockedSpeed then
+        Humanoid.WalkSpeed = lockedSpeed
+    end
+    if fovLocked and Camera.FieldOfView ~= lockedFOV then
+        Camera.FieldOfView = lockedFOV
     end
 end)
 
