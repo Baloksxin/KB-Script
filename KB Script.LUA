@@ -8,11 +8,28 @@ local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
 local Camera = workspace.CurrentCamera
 
+-- Initial Values Storage
+local initialValues = {
+    walkSpeed = nil,
+    fieldOfView = nil
+}
+
 -- Lock Status Variables
 local speedLocked = false
 local fovLocked = false
 local lockedSpeed = 16
 local lockedFOV = 70
+
+-- Store initial values when character loads
+local function storeInitialValues()
+    if Humanoid then
+        initialValues.walkSpeed = Humanoid.WalkSpeed
+    end
+    initialValues.fieldOfView = Camera.FieldOfView
+end
+
+-- Call this when the character first loads
+storeInitialValues()
 
 -- Language Settings
 local language = {
@@ -24,8 +41,8 @@ local language = {
         fovSettings = "视场角(FOV)设置",
         inputSpeedPrompt = "输入速度值 (0-100)",
         inputFovPrompt = "输入FOV值 (10-120)",
-        resetSpeedButton = "重置速度到默认",
-        resetFovButton = "重置FOV到默认",
+        resetSpeedButton = "重置速度到初始值",
+        resetFovButton = "重置FOV到初始值",
         presets = "预设配置",
         raceSpeed = "竞赛速度 (32)",
         slowMode = "慢速模式 (8)",
@@ -40,8 +57,8 @@ local language = {
         confirm = "确定",
         speedSetTo = "速度已设置为: ",
         fovSetTo = "FOV已设置为: ",
-        speedReset = "速度已重置为默认值 (16)",
-        fovReset = "FOV已重置为默认值 (70)",
+        speedReset = "速度已重置到初始值",
+        fovReset = "FOV已重置到初始值",
         invalidSpeed = "请输入0-100之间的有效数值",
         invalidFov = "请输入10-120之间的有效数值",
         speedRaceMode = "速度已设置为竞赛模式 (32)",
@@ -66,8 +83,8 @@ local language = {
         fovSettings = "Field of View (FOV) Settings",
         inputSpeedPrompt = "Enter Speed (0-100)",
         inputFovPrompt = "Enter FOV (10-120)",
-        resetSpeedButton = "Reset Speed to Default",
-        resetFovButton = "Reset FOV to Default",
+        resetSpeedButton = "Reset Speed to Initial",
+        resetFovButton = "Reset FOV to Initial",
         presets = "Presets",
         raceSpeed = "Race Speed (32)",
         slowMode = "Slow Mode (8)",
@@ -82,8 +99,8 @@ local language = {
         confirm = "OK",
         speedSetTo = "Speed set to: ",
         fovSetTo = "FOV set to: ",
-        speedReset = "Speed reset to default (16)",
-        fovReset = "FOV reset to default (70)",
+        speedReset = "Speed reset to initial value",
+        fovReset = "FOV reset to initial value",
         invalidSpeed = "Please enter a valid number between 0-100",
         invalidFov = "Please enter a valid number between 10-120",
         speedRaceMode = "Speed set to race mode (32)",
@@ -193,20 +210,22 @@ characterChannel:Toggle(getText("lockFov"), false, function(value)
     end
 end)
 
--- Reset buttons
+-- Reset buttons with initial values
 characterChannel:Button(getText("resetSpeedButton"), function()
     if speedLocked then return end
-    if Humanoid then
-        Humanoid.WalkSpeed = 16
-        lockedSpeed = 16
+    if Humanoid and initialValues.walkSpeed then
+        Humanoid.WalkSpeed = initialValues.walkSpeed
+        lockedSpeed = initialValues.walkSpeed
     end
     DiscordLib:Notification(getText("notification"), getText("speedReset"), getText("confirm"))
 end)
 
 characterChannel:Button(getText("resetFovButton"), function()
     if fovLocked then return end
-    Camera.FieldOfView = 70
-    lockedFOV = 70
+    if initialValues.fieldOfView then
+        Camera.FieldOfView = initialValues.fieldOfView
+        lockedFOV = initialValues.fieldOfView
+    end
     DiscordLib:Notification(getText("notification"), getText("fovReset"), getText("confirm"))
 end)
 
@@ -251,13 +270,17 @@ end)
 local infoChannel = mainPage:Channel(getText("info"))
 
 infoChannel:Label(getText("creator") .. "Baloksxin")
-infoChannel:Label(getText("version") .. "v1.0.3")
-infoChannel:Label(getText("updateTime") .. "2025-03-01")
+infoChannel:Label(getText("version") .. "v1.0.4")
+infoChannel:Label(getText("updateTime") .. "2025-03-01 13:32:28")
 
 -- Update character reference when respawning
 LocalPlayer.CharacterAdded:Connect(function(newCharacter)
     Character = newCharacter
     Humanoid = Character:WaitForChild("Humanoid")
+    -- Store initial values if they haven't been stored yet
+    if not initialValues.walkSpeed then
+        storeInitialValues()
+    end
     if Humanoid then
         if speedLocked then
             Humanoid.WalkSpeed = lockedSpeed
