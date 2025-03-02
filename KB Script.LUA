@@ -7,16 +7,21 @@ local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
 local Camera = workspace.CurrentCamera
+local Lighting = game:GetService("Lighting")
 
 -- Initial Values Storage
 local initialValues = {
     walkSpeed = nil,
-    fieldOfView = nil
+    fieldOfView = nil,
+    brightness = nil,
+    ambient = nil,
+    colorCorrection = nil
 }
 
 -- Lock Status Variables
 local speedLocked = false
 local fovLocked = false
+local nightVisionEnabled = false
 local lockedSpeed = 16
 local lockedFOV = 70
 
@@ -26,6 +31,11 @@ local function storeInitialValues()
         initialValues.walkSpeed = Humanoid.WalkSpeed
     end
     initialValues.fieldOfView = Camera.FieldOfView
+    initialValues.brightness = Lighting.Brightness
+    initialValues.ambient = Lighting.Ambient
+    if Lighting:FindFirstChild("ColorCorrection") then
+        initialValues.colorCorrection = Lighting.ColorCorrection:Clone()
+    end
 end
 
 -- Call this when the character first loads
@@ -48,6 +58,7 @@ local language = {
         slowMode = "慢速模式 (8)",
         wideAngleFov = "广角FOV (90)",
         competitiveFov = "竞技FOV (80)",
+        nightVision = "夜视功能",
         info = "信息",
         creator = "制作者: ",
         version = "当前版本: ",
@@ -59,6 +70,8 @@ local language = {
         fovSetTo = "FOV已设置为: ",
         speedReset = "速度已重置到初始值",
         fovReset = "FOV已重置到初始值",
+        nightVisionEnabled = "夜视功能已启用",
+        nightVisionDisabled = "夜视功能已禁用",
         invalidSpeed = "请输入0-100之间的有效数值",
         invalidFov = "请输入10-120之间的有效数值",
         speedRaceMode = "速度已设置为竞赛模式 (32)",
@@ -90,6 +103,7 @@ local language = {
         slowMode = "Slow Mode (8)",
         wideAngleFov = "Wide Angle FOV (90)",
         competitiveFov = "Competitive FOV (80)",
+        nightVision = "Night Vision",
         info = "Information",
         creator = "Creator: ",
         version = "Version",
@@ -101,6 +115,8 @@ local language = {
         fovSetTo = "FOV set to: ",
         speedReset = "Speed reset to initial value",
         fovReset = "FOV reset to initial value",
+        nightVisionEnabled = "Night Vision Enabled",
+        nightVisionDisabled = "Night Vision Disabled",
         invalidSpeed = "Please enter a valid number between 0-100",
         invalidFov = "Please enter a valid number between 10-120",
         speedRaceMode = "Speed set to race mode (32)",
@@ -213,6 +229,32 @@ characterChannel:Toggle(getText("lockFov"), false, function(value)
     end
 end)
 
+-- Night vision toggle
+characterChannel:Toggle(getText("nightVision"), false, function(value)
+    nightVisionEnabled = value
+    if nightVisionEnabled then
+        Lighting.Brightness = 2
+        Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+        if not Lighting:FindFirstChild("ColorCorrection") then
+            local colorCorrection = Instance.new("ColorCorrectionEffect")
+            colorCorrection.Name = "ColorCorrection"
+            colorCorrection.Parent = Lighting
+        end
+        Lighting.ColorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
+        DiscordLib:Notification(getText("notification"), getText("nightVisionEnabled"), getText("confirm"))
+    else
+        Lighting.Brightness = initialValues.brightness
+        Lighting.Ambient = initialValues.ambient
+        if Lighting:FindFirstChild("ColorCorrection") then
+            Lighting.ColorCorrection:Destroy()
+        end
+        if initialValues.colorCorrection then
+            initialValues.colorCorrection.Parent = Lighting
+        end
+        DiscordLib:Notification(getText("notification"), getText("nightVisionDisabled"), getText("confirm"))
+    end
+end)
+
 -- Reset buttons with initial values
 characterChannel:Button(getText("resetSpeedButton"), function()
     if speedLocked then return end
@@ -273,8 +315,8 @@ end)
 local infoChannel = mainPage:Channel(getText("info"))
 
 infoChannel:Label(getText("creator") .. "Baloksxin")
-infoChannel:Label(getText("version") .. "v1.0.4")
-infoChannel:Label(getText("updateTime") .. "2025-03-01 13:32:28")
+infoChannel:Label(getText("version") .. "v1.1.0")
+infoChannel:Label(getText("updateTime") .. "2025-03-02 01:00:14")
 
 -- Update character reference when respawning
 LocalPlayer.CharacterAdded:Connect(function(newCharacter)
