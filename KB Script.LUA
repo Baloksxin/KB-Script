@@ -1,5 +1,5 @@
 -- Discord UI Library
-local DiscordLib = loadstring(game:HttpGet"https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/discord")()
+local DiscordLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/discord"))()
 
 -- Services
 local Players = game:GetService("Players")
@@ -8,6 +8,8 @@ local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
 local Camera = workspace.CurrentCamera
 local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 -- Initial Values Storage
 local initialValues = {
@@ -38,7 +40,6 @@ local function storeInitialValues()
     end
 end
 
--- Call this when the character first loads
 storeInitialValues()
 
 -- Language Settings
@@ -86,7 +87,8 @@ local language = {
         speedLocked = "速度已锁定",
         speedUnlocked = "速度已解锁",
         fovLocked = "FOV已锁定",
-        fovUnlocked = "FOV已解锁"
+        fovUnlocked = "FOV已解锁",
+        espToggle = "ESP 功能"
     },
     english = {
         windowTitle = "KB Script",
@@ -131,11 +133,11 @@ local language = {
         speedLocked = "Speed has been locked",
         speedUnlocked = "Speed has been unlocked",
         fovLocked = "FOV has been locked",
-        fovUnlocked = "FOV has been unlocked"
+        fovUnlocked = "FOV has been unlocked",
+        espToggle = "ESP Feature"
     }
 }
 
--- Get saved language preference or default to Chinese
 local currentLang = "chinese"
 local success, savedLang = pcall(function()
     return game:GetService("HttpService"):JSONDecode(LocalPlayer:GetAttribute("KBScriptLang"))
@@ -159,6 +161,9 @@ local characterChannel = mainPage:Channel(getText("characterSettings"))
 
 -- Create language settings channel
 local languageChannel = mainPage:Channel(getText("language"))
+
+-- Create ESP settings channel (alternative ESP using SelectionBox)
+local espChannel = mainPage:Channel(getText("espToggle"))
 
 -- Language switcher
 languageChannel:Button("English", function()
@@ -255,13 +260,8 @@ characterChannel:Toggle(getText("nightVision"), false, function(value)
     end
 end)
 
--- Night vision status tracking variables
-local lastBrightness = Lighting.Brightness
-local lastAmbient = Lighting.Ambient
-local lastTintColor = Lighting:FindFirstChild("ColorCorrection") and Lighting.ColorCorrection.TintColor or nil
-
--- Continuous night vision application to counteract resets
-game:GetService("RunService").RenderStepped:Connect(function()
+-- Continuous application of night vision settings to counter resets
+RunService.RenderStepped:Connect(function()
     if nightVisionEnabled then
         if Lighting.Brightness ~= 2 then
             Lighting.Brightness = 2
@@ -301,8 +301,6 @@ end)
 
 -- Presets channel
 local presetsChannel = mainPage:Channel(getText("presets"))
-
--- Speed presets
 presetsChannel:Button(getText("raceSpeed"), function()
     if speedLocked then return end
     if Humanoid then
@@ -311,7 +309,6 @@ presetsChannel:Button(getText("raceSpeed"), function()
     end
     DiscordLib:Notification(getText("notification"), getText("speedRaceMode"), getText("confirm"))
 end)
-
 presetsChannel:Button(getText("slowMode"), function()
     if speedLocked then return end
     if Humanoid then
@@ -320,15 +317,12 @@ presetsChannel:Button(getText("slowMode"), function()
     end
     DiscordLib:Notification(getText("notification"), getText("speedSlowMode"), getText("confirm"))
 end)
-
--- FOV presets
 presetsChannel:Button(getText("wideAngleFov"), function()
     if fovLocked then return end
     Camera.FieldOfView = 90
     lockedFOV = 90
     DiscordLib:Notification(getText("notification"), getText("fovWideMode"), getText("confirm"))
 end)
-
 presetsChannel:Button(getText("competitiveFov"), function()
     if fovLocked then return end
     Camera.FieldOfView = 80
@@ -338,16 +332,87 @@ end)
 
 -- Info channel
 local infoChannel = mainPage:Channel(getText("info"))
-
 infoChannel:Label(getText("creator") .. "Baloksxin")
 infoChannel:Label(getText("version") .. "v1.1.0")
 infoChannel:Label(getText("updateTime") .. "2025-03-02 01:00:14")
+
+-- Alternative ESP implementation using SelectionBox instead of Highlight
+local espEnabled = false
+
+local function addEspToPart(part)
+    if not part or not part:IsA("BasePart") then 
+        return 
+    end
+    if part:FindFirstChild("ESPSelectionBox") then 
+        return 
+    end
+
+    local selectionBox = Instance.new("SelectionBox")
+    selectionBox.Name = "ESPSelectionBox"
+    selectionBox.Adornee = part
+    selectionBox.LineThickness = 0.05
+    selectionBox.Color3 = Color3.fromRGB(255, 0, 0)  -- red outline
+    selectionBox.Visible = espEnabled
+    selectionBox.Parent = part
+end
+
+local function isEspTarget(name)
+    local lname = string.lower(name)
+    return string.find(lname, "door") or string.find(lname, "门") or 
+           string.find(lname, "key") or string.find(lname, "钥匙") or 
+           string.find(lname, "item") or string.find(lname, "物品")
+end
+
+local function updateESPInWorkspace()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and isEspTarget(obj.Name) then
+            local selectionBox = obj:FindFirstChild("ESPSelectionBox")
+            if selectionBox then
+                selectionBox.Visible = espEnabled
+            elseif espEnabled then
+                addEspToPart(obj)
+            end
+        end
+    end
+end
+
+-- Toggle for ESP in the ESP channel using the alternative implementation
+espChannel:Toggle(getText("espToggle"), false, function(value)
+    espEnabled = value
+    updateESPInWorkspace()
+    if espEnabled then
+        DiscordLib:Notification(getText("notification"), "ESP Enabled (SelectionBox mode)", getText("confirm"))
+    else
+        DiscordLib:Notification(getText("notification"), "ESP Disabled", getText("confirm"))
+    end
+end)
+
+-- Automatically apply ESP to new matching objects added to the workspace
+workspace.DescendantAdded:Connect(function(child)
+    if espEnabled and child:IsA("BasePart") and isEspTarget(child.Name) then
+        addEspToPart(child)
+    end
+end)
+
+-- Update locks periodically
+RunService.Heartbeat:Connect(function()
+    if speedLocked and Humanoid and Humanoid.WalkSpeed ~= lockedSpeed then
+        Humanoid.WalkSpeed = lockedSpeed
+    end
+    if fovLocked and Camera.FieldOfView ~= lockedFOV then
+        Camera.FieldOfView = lockedFOV
+    end
+end)
+
+-- Force FOV update in RenderStepped
+RunService.RenderStepped:Connect(function()
+    Camera.FieldOfView = lockedFOV
+end)
 
 -- Update character reference when respawning
 LocalPlayer.CharacterAdded:Connect(function(newCharacter)
     Character = newCharacter
     Humanoid = Character:WaitForChild("Humanoid")
-    -- Store initial values if they haven't been stored yet
     if not initialValues.walkSpeed then
         storeInitialValues()
     end
@@ -358,24 +423,7 @@ LocalPlayer.CharacterAdded:Connect(function(newCharacter)
     end
 end)
 
--- Lock maintenance
-game:GetService("RunService").Heartbeat:Connect(function()
-    if speedLocked and Humanoid and Humanoid.WalkSpeed ~= lockedSpeed then
-        Humanoid.WalkSpeed = lockedSpeed
-    end
-    if fovLocked and Camera.FieldOfView ~= lockedFOV then
-        Camera.FieldOfView = lockedFOV
-    end
-end)
-
--- Force FOV update in RenderStepped
-game:GetService("RunService").RenderStepped:Connect(function()
-    Camera.FieldOfView = lockedFOV
-end)
-
--- Add shortcut key support
-local UserInputService = game:GetService("UserInputService")
-
+-- Shortcut key support to toggle the main window with RightShift
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed then
         if input.KeyCode == Enum.KeyCode.RightShift then
