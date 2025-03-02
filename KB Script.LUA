@@ -45,6 +45,15 @@ end
 
 storeInitialValues()
 
+-- Auto-save function to persist language settings in the injector's local folder
+local function autoSaveLanguage(lang)
+    if writefile then
+        pcall(function() 
+            writefile("KBScriptLang.json", game:GetService("HttpService"):JSONEncode(lang))
+        end)
+    end
+end
+
 -- Language Settings
 local language = {
     chinese = {
@@ -130,11 +139,25 @@ local language = {
 }
 
 local currentLang = "chinese"
-local success, savedLang = pcall(function()
-    return game:GetService("HttpService"):JSONDecode(LocalPlayer:GetAttribute("KBScriptLang"))
-end)
-if success and savedLang then
+local savedLang = nil
+
+-- Try to read the saved language from the local file first
+if readfile then
+    pcall(function()
+        savedLang = game:GetService("HttpService"):JSONDecode(readfile("KBScriptLang.json"))
+    end)
+end
+
+if savedLang then
     currentLang = savedLang
+else
+    -- Fallback: use player's attribute, if available
+    local attr = LocalPlayer:GetAttribute("KBScriptLang")
+    if attr then
+        pcall(function()
+            currentLang = game:GetService("HttpService"):JSONDecode(attr)
+        end)
+    end
 end
 
 local function getText(key)
@@ -153,19 +176,23 @@ local characterChannel = mainPage:Channel(getText("characterSettings"))
 -- Create language settings channel
 local languageChannel = mainPage:Channel(getText("language"))
 
--- Language switcher
-languageChannel:Button("English", function()
-    currentLang = "english"
+-- Helper function to update notifications and, if needed, other UI elements after language change.
+local function updateLanguage(newLang)
+    currentLang = newLang
     LocalPlayer:SetAttribute("KBScriptLang", game:GetService("HttpService"):JSONEncode(currentLang))
-    DiscordLib:Notification(getText("notification"), "Language set to English. Please reopen the script.", getText("confirm"))
-    window:Close()
+    autoSaveLanguage(currentLang)
+    DiscordLib:Notification(getText("notification"), "Language set to " .. newLang, getText("confirm"))
+    -- Optionally update other UI texts if supported by the library.
+end
+
+-- Language switcher button for English
+languageChannel:Button("English", function()
+    updateLanguage("english")
 end)
 
+-- Language switcher button for Chinese
 languageChannel:Button("中文", function()
-    currentLang = "chinese"
-    LocalPlayer:SetAttribute("KBScriptLang", game:GetService("HttpService"):JSONEncode(currentLang))
-    DiscordLib:Notification(getText("notification"), "语言已设置为中文，请重新打开脚本。", getText("confirm"))
-    window:Close()
+    updateLanguage("chinese")
 end)
 
 -- Speed settings section
