@@ -255,6 +255,31 @@ characterChannel:Toggle(getText("nightVision"), false, function(value)
     end
 end)
 
+-- Night vision status tracking variables
+local lastBrightness = Lighting.Brightness
+local lastAmbient = Lighting.Ambient
+local lastTintColor = Lighting:FindFirstChild("ColorCorrection") and Lighting.ColorCorrection.TintColor or nil
+
+-- Continuous night vision application to counteract resets
+game:GetService("RunService").RenderStepped:Connect(function()
+    if nightVisionEnabled then
+        if Lighting.Brightness ~= 2 then
+            Lighting.Brightness = 2
+        end
+        if Lighting.Ambient ~= Color3.fromRGB(255, 255, 255) then
+            Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+        end
+        if not Lighting:FindFirstChild("ColorCorrection") then
+            local colorCorrection = Instance.new("ColorCorrectionEffect")
+            colorCorrection.Name = "ColorCorrection"
+            colorCorrection.Parent = Lighting
+            colorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
+        elseif Lighting.ColorCorrection.TintColor ~= Color3.fromRGB(255, 255, 255) then
+            Lighting.ColorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
+        end
+    end
+end)
+
 -- Reset buttons with initial values
 characterChannel:Button(getText("resetSpeedButton"), function()
     if speedLocked then return end
