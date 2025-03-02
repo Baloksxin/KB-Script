@@ -92,8 +92,8 @@ local language = {
         competitiveFov = "Competitive FOV (80)",
         info = "Information",
         creator = "Creator: ",
-        version = "Version: ",
-        updateTime = "Update Time: ",
+        version = "Version",
+        updateTime = "Update Time",
         notification = "Notification",
         error = "Error",
         confirm = "OK",
@@ -180,11 +180,14 @@ characterChannel:Label(getText("fovSettings"))
 characterChannel:Textbox(getText("inputFovPrompt"), "", false, function(value)
     if fovLocked then return end
     local fov = tonumber(value)
+    print("Attempting to set FOV to:", fov) -- Debug print
     if fov and fov >= 10 and fov <= 120 then
         Camera.FieldOfView = fov
         lockedFOV = fov
+        print("FOV set to:", fov) -- Debug print
         DiscordLib:Notification(getText("notification"), getText("fovSetTo") .. fov, getText("confirm"))
     else
+        print("Invalid FOV value:", fov) -- Debug print
         DiscordLib:Notification(getText("error"), getText("invalidFov"), getText("confirm"))
     end
 end)
@@ -296,6 +299,11 @@ game:GetService("RunService").Heartbeat:Connect(function()
     if fovLocked and Camera.FieldOfView ~= lockedFOV then
         Camera.FieldOfView = lockedFOV
     end
+end)
+
+-- Force FOV update in RenderStepped
+game:GetService("RunService").RenderStepped:Connect(function()
+    Camera.FieldOfView = lockedFOV
 end)
 
 -- Add shortcut key support
