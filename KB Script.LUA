@@ -27,6 +27,9 @@ local nightVisionEnabled = false
 local lockedSpeed = 16
 local lockedFOV = 70
 
+-- Wallhack Status Variable
+local wallHackEnabled = false
+
 -- Store initial values when character loads
 local function storeInitialValues()
     if Humanoid then
@@ -60,6 +63,7 @@ local language = {
         wideAngleFov = "广角FOV (90)",
         competitiveFov = "竞技FOV (80)",
         nightVision = "夜视功能",
+        wallHack = "穿牆功能",
         info = "信息",
         creator = "制作者: ",
         version = "当前版本: ",
@@ -79,6 +83,8 @@ local language = {
         speedSlowMode = "速度已设置为慢速模式 (8)",
         fovWideMode = "FOV已设置为广角模式 (90)",
         fovCompMode = "FOV已设置为竞技模式 (80)",
+        wallHackEnabled = "穿牆功能已启用",
+        wallHackDisabled = "穿牆功能已禁用",
         language = "语言"
     },
     english = {
@@ -97,6 +103,7 @@ local language = {
         wideAngleFov = "Wide Angle FOV (90)",
         competitiveFov = "Competitive FOV (80)",
         nightVision = "Night Vision",
+        wallHack = "Wall Hack",
         info = "Information",
         creator = "Creator: ",
         version = "Version",
@@ -116,6 +123,8 @@ local language = {
         speedSlowMode = "Speed set to slow mode (8)",
         fovWideMode = "FOV set to wide angle mode (90)",
         fovCompMode = "FOV set to competitive mode (80)",
+        wallHackEnabled = "Wall Hack Enabled",
+        wallHackDisabled = "Wall Hack Disabled",
         language = "Language"
     }
 }
@@ -239,6 +248,25 @@ characterChannel:Toggle(getText("nightVision"), false, function(value)
     end
 end)
 
+-- Wall Hack toggle
+local function updateWallHack(character)
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = not wallHackEnabled
+        end
+    end
+end
+
+characterChannel:Toggle(getText("wallHack"), false, function(value)
+    wallHackEnabled = value
+    updateWallHack(Character)
+    if wallHackEnabled then
+        DiscordLib:Notification(getText("notification"), getText("wallHackEnabled"), getText("confirm"))
+    else
+        DiscordLib:Notification(getText("notification"), getText("wallHackDisabled"), getText("confirm"))
+    end
+end)
+
 -- Continuous application of night vision settings to counter resets
 RunService.RenderStepped:Connect(function()
     if nightVisionEnabled then
@@ -257,6 +285,8 @@ RunService.RenderStepped:Connect(function()
             Lighting.ColorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
         end
     end
+    -- Force FOV update
+    Camera.FieldOfView = lockedFOV
 end)
 
 -- Reset buttons with initial values
@@ -325,11 +355,6 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- Force FOV update in RenderStepped
-RunService.RenderStepped:Connect(function()
-    Camera.FieldOfView = lockedFOV
-end)
-
 -- Update character reference when respawning
 LocalPlayer.CharacterAdded:Connect(function(newCharacter)
     Character = newCharacter
@@ -342,6 +367,8 @@ LocalPlayer.CharacterAdded:Connect(function(newCharacter)
             Humanoid.WalkSpeed = lockedSpeed
         end
     end
+    -- Reapply wallhack if enabled on respawn
+    updateWallHack(Character)
 end)
 
 -- Shortcut key support to toggle the main window with RightShift
