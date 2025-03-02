@@ -79,16 +79,7 @@ local language = {
         speedSlowMode = "速度已设置为慢速模式 (8)",
         fovWideMode = "FOV已设置为广角模式 (90)",
         fovCompMode = "FOV已设置为竞技模式 (80)",
-        language = "语言",
-        lockSpeed = "锁定速度",
-        unlockSpeed = "解锁速度",
-        lockFov = "锁定FOV",
-        unlockFov = "解锁FOV",
-        speedLocked = "速度已锁定",
-        speedUnlocked = "速度已解锁",
-        fovLocked = "FOV已锁定",
-        fovUnlocked = "FOV已解锁",
-        espToggle = "ESP 功能"
+        language = "语言"
     },
     english = {
         windowTitle = "KB Script",
@@ -125,16 +116,7 @@ local language = {
         speedSlowMode = "Speed set to slow mode (8)",
         fovWideMode = "FOV set to wide angle mode (90)",
         fovCompMode = "FOV set to competitive mode (80)",
-        language = "Language",
-        lockSpeed = "Lock Speed",
-        unlockSpeed = "Unlock Speed",
-        lockFov = "Lock FOV",
-        unlockFov = "Unlock FOV",
-        speedLocked = "Speed has been locked",
-        speedUnlocked = "Speed has been unlocked",
-        fovLocked = "FOV has been locked",
-        fovUnlocked = "FOV has been unlocked",
-        espToggle = "ESP Feature"
+        language = "Language"
     }
 }
 
@@ -161,9 +143,6 @@ local characterChannel = mainPage:Channel(getText("characterSettings"))
 
 -- Create language settings channel
 local languageChannel = mainPage:Channel(getText("language"))
-
--- Create ESP settings channel (alternative ESP using SelectionBox)
-local espChannel = mainPage:Channel(getText("espToggle"))
 
 -- Language switcher
 languageChannel:Button("English", function()
@@ -214,23 +193,23 @@ characterChannel:Textbox(getText("inputFovPrompt"), "", false, function(value)
 end)
 
 -- Lock toggles
-characterChannel:Toggle(getText("lockSpeed"), false, function(value)
+characterChannel:Toggle("锁定速度", false, function(value)
     speedLocked = value
     if speedLocked then
         lockedSpeed = Humanoid.WalkSpeed
-        DiscordLib:Notification(getText("notification"), getText("speedLocked"), getText("confirm"))
+        DiscordLib:Notification(getText("notification"), "速度已锁定", getText("confirm"))
     else
-        DiscordLib:Notification(getText("notification"), getText("speedUnlocked"), getText("confirm"))
+        DiscordLib:Notification(getText("notification"), "速度已解锁", getText("confirm"))
     end
 end)
 
-characterChannel:Toggle(getText("lockFov"), false, function(value)
+characterChannel:Toggle("锁定FOV", false, function(value)
     fovLocked = value
     if fovLocked then
         lockedFOV = Camera.FieldOfView
-        DiscordLib:Notification(getText("notification"), getText("fovLocked"), getText("confirm"))
+        DiscordLib:Notification(getText("notification"), "FOV已锁定", getText("confirm"))
     else
-        DiscordLib:Notification(getText("notification"), getText("fovUnlocked"), getText("confirm"))
+        DiscordLib:Notification(getText("notification"), "FOV已解锁", getText("confirm"))
     end
 end)
 
@@ -335,64 +314,6 @@ local infoChannel = mainPage:Channel(getText("info"))
 infoChannel:Label(getText("creator") .. "Baloksxin")
 infoChannel:Label(getText("version") .. "v1.1.0")
 infoChannel:Label(getText("updateTime") .. "2025-03-02 01:00:14")
-
--- Alternative ESP implementation using SelectionBox instead of Highlight
-local espEnabled = false
-
-local function addEspToPart(part)
-    if not part or not part:IsA("BasePart") then 
-        return 
-    end
-    if part:FindFirstChild("ESPSelectionBox") then 
-        return 
-    end
-
-    local selectionBox = Instance.new("SelectionBox")
-    selectionBox.Name = "ESPSelectionBox"
-    selectionBox.Adornee = part
-    selectionBox.LineThickness = 0.05
-    selectionBox.Color3 = Color3.fromRGB(255, 0, 0)  -- red outline
-    selectionBox.Visible = espEnabled
-    selectionBox.Parent = part
-end
-
-local function isEspTarget(name)
-    local lname = string.lower(name)
-    return string.find(lname, "door") or string.find(lname, "门") or 
-           string.find(lname, "key") or string.find(lname, "钥匙") or 
-           string.find(lname, "item") or string.find(lname, "物品")
-end
-
-local function updateESPInWorkspace()
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and isEspTarget(obj.Name) then
-            local selectionBox = obj:FindFirstChild("ESPSelectionBox")
-            if selectionBox then
-                selectionBox.Visible = espEnabled
-            elseif espEnabled then
-                addEspToPart(obj)
-            end
-        end
-    end
-end
-
--- Toggle for ESP in the ESP channel using the alternative implementation
-espChannel:Toggle(getText("espToggle"), false, function(value)
-    espEnabled = value
-    updateESPInWorkspace()
-    if espEnabled then
-        DiscordLib:Notification(getText("notification"), "ESP Enabled (SelectionBox mode)", getText("confirm"))
-    else
-        DiscordLib:Notification(getText("notification"), "ESP Disabled", getText("confirm"))
-    end
-end)
-
--- Automatically apply ESP to new matching objects added to the workspace
-workspace.DescendantAdded:Connect(function(child)
-    if espEnabled and child:IsA("BasePart") and isEspTarget(child.Name) then
-        addEspToPart(child)
-    end
-end)
 
 -- Update locks periodically
 RunService.Heartbeat:Connect(function()
