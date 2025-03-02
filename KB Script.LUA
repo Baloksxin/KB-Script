@@ -30,6 +30,9 @@ local lockedFOV = 70
 -- Wallhack Status Variable
 local wallHackEnabled = false
 
+-- Infinite Jump Status Variable
+local infiniteJumpEnabled = false
+
 -- Store initial values when character loads
 local function storeInitialValues()
     if Humanoid then
@@ -73,6 +76,7 @@ local language = {
         competitiveFov = "竞技FOV (80)",
         nightVision = "夜视功能",
         wallHack = "穿牆功能",
+        infiniteJump = "無限跳躍",
         info = "信息",
         creator = "制作者: ",
         version = "当前版本: ",
@@ -94,6 +98,8 @@ local language = {
         fovCompMode = "FOV已设置为竞技模式 (80)",
         wallHackEnabled = "穿牆功能已启用",
         wallHackDisabled = "穿牆功能已禁用",
+        infiniteJumpEnabled = "無限跳躍已啟用",
+        infiniteJumpDisabled = "無限跳躍已禁用",
         language = "语言"
     },
     english = {
@@ -113,6 +119,7 @@ local language = {
         competitiveFov = "Competitive FOV (80)",
         nightVision = "Night Vision",
         wallHack = "Wall Hack",
+        infiniteJump = "Infinite Jump",
         info = "Information",
         creator = "Creator: ",
         version = "Version",
@@ -134,6 +141,8 @@ local language = {
         fovCompMode = "FOV set to competitive mode (80)",
         wallHackEnabled = "Wall Hack Enabled",
         wallHackDisabled = "Wall Hack Disabled",
+        infiniteJumpEnabled = "Infinite Jump Enabled",
+        infiniteJumpDisabled = "Infinite Jump Disabled",
         language = "Language"
     }
 }
@@ -291,6 +300,23 @@ characterChannel:Toggle(getText("wallHack"), false, function(value)
         DiscordLib:Notification(getText("notification"), getText("wallHackEnabled"), getText("confirm"))
     else
         DiscordLib:Notification(getText("notification"), getText("wallHackDisabled"), getText("confirm"))
+    end
+end)
+
+-- Infinite Jump toggle
+characterChannel:Toggle(getText("infiniteJump"), false, function(value)
+    infiniteJumpEnabled = value
+    if infiniteJumpEnabled then
+        DiscordLib:Notification(getText("notification"), getText("infiniteJumpEnabled"), getText("confirm"))
+    else
+        DiscordLib:Notification(getText("notification"), getText("infiniteJumpDisabled"), getText("confirm"))
+    end
+end)
+
+-- Listen for jump requests to implement infinite jump
+UserInputService.JumpRequest:Connect(function()
+    if infiniteJumpEnabled and Humanoid then
+        Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
     end
 end)
 
