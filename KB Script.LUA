@@ -78,8 +78,8 @@ local language = {
         wideAngleFov = "广角FOV (90)",
         competitiveFov = "竞技FOV (80)",
         nightVision = "夜视功能",
-        wallHack = "穿牆功能",
-        infiniteJump = "無限跳躍",
+        wallHack = "穿墙功能",
+        infiniteJump = "无限跳跃",
         esp = "透视功能",
         info = "信息",
         creator = "制作者: ",
@@ -100,13 +100,19 @@ local language = {
         speedSlowMode = "速度已设置为慢速模式 (8)",
         fovWideMode = "FOV已设置为广角模式 (90)",
         fovCompMode = "FOV已设置为竞技模式 (80)",
-        wallHackEnabled = "穿牆功能已启用",
-        wallHackDisabled = "穿牆功能已禁用",
-        infiniteJumpEnabled = "無限跳躍已啟用",
-        infiniteJumpDisabled = "無限跳躍已禁用",
+        wallHackEnabled = "穿墙功能已启用",
+        wallHackDisabled = "穿墙功能已禁用",
+        infiniteJumpEnabled = "无限跳跃已启用",
+        infiniteJumpDisabled = "无限跳跃已禁用",
         espEnabled = "透视功能已启用",
         espDisabled = "透视功能已禁用",
-        language = "语言"
+        language = "语言",
+        lockSpeed = "锁定速度",
+        lockFov = "锁定FOV",
+        speedLocked = "速度已锁定",
+        speedUnlocked = "速度已解锁",
+        fovLocked = "FOV已锁定",
+        fovUnlocked = "FOV已解锁"
     },
     english = {
         windowTitle = "KB Script",
@@ -152,7 +158,13 @@ local language = {
         infiniteJumpDisabled = "Infinite Jump Disabled",
         espEnabled = "ESP Enabled",
         espDisabled = "ESP Disabled",
-        language = "Language"
+        language = "Language",
+        lockSpeed = "Lock Speed",
+        lockFov = "Lock FOV",
+        speedLocked = "Speed Locked",
+        speedUnlocked = "Speed Unlocked",
+        fovLocked = "FOV Locked",
+        fovUnlocked = "FOV Unlocked"
     }
 }
 
@@ -200,6 +212,8 @@ local function updateLanguage(newLang)
     LocalPlayer:SetAttribute("KBScriptLang", game:GetService("HttpService"):JSONEncode(currentLang))
     autoSaveLanguage(currentLang)
     DiscordLib:Notification(getText("notification"), "Language set to " .. newLang, getText("confirm"))
+    -- Refresh UI elements
+    window:Refresh() -- Assuming DiscordLib has a refresh method
 end
 
 -- Language switcher button for English
@@ -243,23 +257,23 @@ characterChannel:Textbox(getText("inputFovPrompt"), "", false, function(value)
 end)
 
 -- Lock toggles
-characterChannel:Toggle("锁定速度", false, function(value)
+characterChannel:Toggle(getText("lockSpeed"), false, function(value)
     speedLocked = value
     if speedLocked then
         lockedSpeed = Humanoid.WalkSpeed
-        DiscordLib:Notification(getText("notification"), "速度已锁定", getText("confirm"))
+        DiscordLib:Notification(getText("notification"), getText("speedLocked"), getText("confirm"))
     else
-        DiscordLib:Notification(getText("notification"), "速度已解锁", getText("confirm"))
+        DiscordLib:Notification(getText("notification"), getText("speedUnlocked"), getText("confirm"))
     end
 end)
 
-characterChannel:Toggle("锁定FOV", false, function(value)
+characterChannel:Toggle(getText("lockFov"), false, function(value)
     fovLocked = value
     if fovLocked then
         lockedFOV = Camera.FieldOfView
-        DiscordLib:Notification(getText("notification"), "FOV已锁定", getText("confirm"))
+        DiscordLib:Notification(getText("notification"), getText("fovLocked"), getText("confirm"))
     else
-        DiscordLib:Notification(getText("notification"), "FOV已解锁", getText("confirm"))
+        DiscordLib:Notification(getText("notification"), getText("fovUnlocked"), getText("confirm"))
     end
 end)
 
