@@ -33,6 +33,9 @@ local wallHackEnabled = false
 -- Infinite Jump Status Variable
 local infiniteJumpEnabled = false
 
+-- ESP Status Variable
+local espEnabled = false
+
 -- Store initial values when character loads
 local function storeInitialValues()
     if Humanoid then
@@ -77,6 +80,7 @@ local language = {
         nightVision = "夜视功能",
         wallHack = "穿牆功能",
         infiniteJump = "無限跳躍",
+        esp = "透视功能",
         info = "信息",
         creator = "制作者: ",
         version = "当前版本: ",
@@ -100,6 +104,8 @@ local language = {
         wallHackDisabled = "穿牆功能已禁用",
         infiniteJumpEnabled = "無限跳躍已啟用",
         infiniteJumpDisabled = "無限跳躍已禁用",
+        espEnabled = "透视功能已启用",
+        espDisabled = "透视功能已禁用",
         language = "语言"
     },
     english = {
@@ -120,6 +126,7 @@ local language = {
         nightVision = "Night Vision",
         wallHack = "Wall Hack",
         infiniteJump = "Infinite Jump",
+        esp = "ESP",
         info = "Information",
         creator = "Creator: ",
         version = "Version",
@@ -143,6 +150,8 @@ local language = {
         wallHackDisabled = "Wall Hack Disabled",
         infiniteJumpEnabled = "Infinite Jump Enabled",
         infiniteJumpDisabled = "Infinite Jump Disabled",
+        espEnabled = "ESP Enabled",
+        espDisabled = "ESP Disabled",
         language = "Language"
     }
 }
@@ -191,7 +200,6 @@ local function updateLanguage(newLang)
     LocalPlayer:SetAttribute("KBScriptLang", game:GetService("HttpService"):JSONEncode(currentLang))
     autoSaveLanguage(currentLang)
     DiscordLib:Notification(getText("notification"), "Language set to " .. newLang, getText("confirm"))
-    -- Optionally update other UI texts if supported by the library.
 end
 
 -- Language switcher button for English
@@ -225,14 +233,11 @@ characterChannel:Label(getText("fovSettings"))
 characterChannel:Textbox(getText("inputFovPrompt"), "", false, function(value)
     if fovLocked then return end
     local fov = tonumber(value)
-    print("Attempting to set FOV to:", fov) -- Debug print
     if fov and fov >= 10 and fov <= 120 then
         Camera.FieldOfView = fov
         lockedFOV = fov
-        print("FOV set to:", fov) -- Debug print
         DiscordLib:Notification(getText("notification"), getText("fovSetTo") .. fov, getText("confirm"))
     else
-        print("Invalid FOV value:", fov) -- Debug print
         DiscordLib:Notification(getText("error"), getText("invalidFov"), getText("confirm"))
     end
 end)
@@ -310,6 +315,106 @@ characterChannel:Toggle(getText("infiniteJump"), false, function(value)
         DiscordLib:Notification(getText("notification"), getText("infiniteJumpEnabled"), getText("confirm"))
     else
         DiscordLib:Notification(getText("notification"), getText("infiniteJumpDisabled"), getText("confirm"))
+    end
+end)
+
+-- ESP Function
+local function createESP(instance, name)
+    if not instance then return end
+
+    -- Check if the instance is a Model or BasePart
+    local primaryPart = instance:IsA("Model") and instance.PrimaryPart or instance:IsA("BasePart") and instance
+    if not primaryPart then return end
+
+    -- Create a box around the object
+    local box = Instance.new("BoxHandleAdornment")
+    box.Size = primaryPart.Size + Vector3.new(0.1, 0.1, 0.1)
+    box.Adornee = primaryPart
+    box.AlwaysOnTop = true
+    box.ZIndex = 10
+    box.Transparency = 0.5
+    box.Color3 = Color3.new(1, 0, 0) -- Red color
+    box.Parent = primaryPart
+
+    -- Create a label for the object's name
+    local billboard = Instance.new("BillboardGui")
+    billboard.Adornee = primaryPart
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 2, 0) -- Position above the object
+    billboard.AlwaysOnTop = true
+    billboard.Parent = primaryPart
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Text = name
+    nameLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
+    nameLabel.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+    nameLabel.Size = UDim2.new(1, 0, 1, 0)
+    nameLabel.Parent = billboard
+end
+
+local function removeESP(instance)
+    if not instance then return end
+
+    -- Check if the instance is a Model or BasePart
+    local primaryPart = instance:IsA("Model") and instance.PrimaryPart or instance:IsA("BasePart") and instance
+    if not primaryPart then return end
+
+    -- Remove ESP box and label
+    for _, child in pairs(primaryPart:GetChildren()) do
+        if child:IsA("BoxHandleAdornment") or child:IsA("BillboardGui") then
+            child:Destroy()
+        end
+    end
+end
+
+-- Function to check if an object should have ESP
+local function shouldHaveESP(obj)
+    -- Add the names of objects you want to track
+    local trackedNames = {"Book", "Door", "Key", "Item"} -- Add more names as needed
+    for _, name in pairs(trackedNames) do
+        if obj.Name == name then
+            return true
+        end
+    end
+    return false
+end
+
+-- Update ESP for all objects
+local function updateESP()
+    -- Update ESP for players
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local character = player.Character
+            if character then
+                if espEnabled then
+                    createESP(character, player.Name)
+                else
+                    removeESP(character)
+                end
+            end
+        end
+    end
+
+    -- Update ESP for objects (books, doors, keys, etc.)
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if (obj:IsA("Model") or obj:IsA("BasePart")) and shouldHaveESP(obj) then
+            if espEnabled then
+                createESP(obj, obj.Name)
+            else
+                removeESP(obj)
+            end
+        end
+    end
+end
+
+-- ESP Toggle
+characterChannel:Toggle(getText("esp"), false, function(value)
+    espEnabled = value
+    updateESP()
+    if espEnabled then
+        DiscordLib:Notification(getText("notification"), getText("espEnabled"), getText("confirm"))
+    else
+        DiscordLib:Notification(getText("notification"), getText("espDisabled"), getText("confirm"))
     end
 end)
 
@@ -422,7 +527,44 @@ LocalPlayer.CharacterAdded:Connect(function(newCharacter)
     end
     -- Reapply wallhack if enabled on respawn
     updateWallHack(Character)
+    -- Reapply ESP if enabled on respawn
+    if espEnabled then
+        updateESP()
+    end
 end)
+
+-- Update ESP when a player's character is added
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        if espEnabled then
+            createESP(character, player.Name)
+        end
+    end)
+end)
+
+-- Update ESP when a player leaves
+Players.PlayerRemoving:Connect(function(player)
+    if player.Character then
+        removeESP(player.Character)
+    end
+end)
+
+-- Initial ESP update for existing players and objects
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer and player.Character then
+        if espEnabled then
+            createESP(player.Character, player.Name)
+        end
+    end
+end
+
+for _, obj in pairs(workspace:GetDescendants()) do
+    if (obj:IsA("Model") or obj:IsA("BasePart")) and shouldHaveESP(obj) then
+        if espEnabled then
+            createESP(obj, obj.Name)
+        end
+    end
+end
 
 -- Shortcut key support to toggle the main window with RightShift
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
