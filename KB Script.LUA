@@ -370,7 +370,7 @@ end
 -- Function to check if an object should have ESP
 local function shouldHaveESP(obj)
     -- Add the names of objects you want to track
-    local trackedNames = {"Book", "Door", "Key", "Item"} -- Add more names as needed
+    local trackedNames = {"Book", "Door", "Key", "Item", "NewObject"} -- Add more names as needed
     for _, name in pairs(trackedNames) do
         if obj.Name == name then
             return true
@@ -406,6 +406,22 @@ local function updateESP()
         end
     end
 end
+
+-- Listen for new objects to add ESP
+workspace.DescendantAdded:Connect(function(obj)
+    if (obj:IsA("Model") or obj:IsA("BasePart")) and shouldHaveESP(obj) then
+        if espEnabled then
+            createESP(obj, obj.Name)
+        end
+    end
+end)
+
+-- Listen for removed objects to remove ESP
+workspace.DescendantRemoving:Connect(function(obj)
+    if (obj:IsA("Model") or obj:IsA("BasePart")) and shouldHaveESP(obj) then
+        removeESP(obj)
+    end
+end)
 
 -- ESP Toggle
 characterChannel:Toggle(getText("esp"), false, function(value)
