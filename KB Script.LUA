@@ -10,6 +10,7 @@ local Camera = workspace.CurrentCamera
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
 
 -- Initial Values Storage
 local initialValues = {
@@ -54,8 +55,8 @@ storeInitialValues()
 -- Auto-save function to persist language settings in the injector's local folder
 local function autoSaveLanguage(lang)
     if writefile then
-        pcall(function() 
-            writefile("KBScriptLang.json", game:GetService("HttpService"):JSONEncode(lang))
+        pcall(function()
+            writefile("KBScriptLang.json", HttpService:JSONEncode(lang))
         end)
     end
 end
@@ -174,7 +175,7 @@ local savedLang = nil
 -- Try to read the saved language from the local file first
 if readfile then
     pcall(function()
-        savedLang = game:GetService("HttpService"):JSONDecode(readfile("KBScriptLang.json"))
+        savedLang = HttpService:JSONDecode(readfile("KBScriptLang.json"))
     end)
 end
 
@@ -185,7 +186,7 @@ else
     local attr = LocalPlayer:GetAttribute("KBScriptLang")
     if attr then
         pcall(function()
-            currentLang = game:GetService("HttpService"):JSONDecode(attr)
+            currentLang = HttpService:JSONDecode(attr)
         end)
     end
 end
@@ -209,7 +210,7 @@ local languageChannel = mainPage:Channel(getText("language"))
 -- Helper function to update notifications and, if needed, other UI elements after language change.
 local function updateLanguage(newLang)
     currentLang = newLang
-    LocalPlayer:SetAttribute("KBScriptLang", game:GetService("HttpService"):JSONEncode(currentLang))
+    LocalPlayer:SetAttribute("KBScriptLang", HttpService:JSONEncode(currentLang))
     autoSaveLanguage(currentLang)
     DiscordLib:Notification(getText("notification"), "Language set to " .. newLang, getText("confirm"))
     -- Refresh UI elements
@@ -305,21 +306,21 @@ end)
 
 -- Wall Hack toggle
 local function updateWallHack(character)
-    for _, part in pairs(character:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = not wallHackEnabled
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                part.CanCollide = not wallHackEnabled
+            end
         end
     end
 end
 
 characterChannel:Toggle(getText("wallHack"), false, function(value)
     wallHackEnabled = value
-    updateWallHack(Character)
-    if wallHackEnabled then
-        DiscordLib:Notification(getText("notification"), getText("wallHackEnabled"), getText("confirm"))
-    else
-        DiscordLib:Notification(getText("notification"), getText("wallHackDisabled"), getText("confirm"))
+    if LocalPlayer.Character then
+        updateWallHack(LocalPlayer.Character)
     end
+    DiscordLib:Notification(getText("notification"), getText("wallHackEnabled"), getText("confirm"))
 end)
 
 -- Infinite Jump toggle
@@ -333,58 +334,52 @@ characterChannel:Toggle(getText("infiniteJump"), false, function(value)
 end)
 
 -- ESP Function
+local espObjects = {}
+
 local function createESP(instance, name)
     if not instance then return end
 
-    -- Check if the instance is a Model or BasePart
     local primaryPart = instance:IsA("Model") and instance.PrimaryPart or instance:IsA("BasePart") and instance
     if not primaryPart then return end
 
-    -- Create a box around the object
     local box = Instance.new("BoxHandleAdornment")
     box.Size = primaryPart.Size + Vector3.new(0.1, 0.1, 0.1)
     box.Adornee = primaryPart
     box.AlwaysOnTop = true
     box.ZIndex = 10
     box.Transparency = 0.5
-    box.Color3 = Color3.new(1, 0, 0) -- Red color
+    box.Color3 = Color3.new(1, 0, 0)
     box.Parent = primaryPart
+    espObjects[instance] = {box}
 
-    -- Create a label for the object's name
     local billboard = Instance.new("BillboardGui")
     billboard.Adornee = primaryPart
     billboard.Size = UDim2.new(0, 200, 0, 50)
-    billboard.StudsOffset = Vector3.new(0, 2, 0) -- Position above the object
+    billboard.StudsOffset = Vector3.new(0, 2, 0)
     billboard.AlwaysOnTop = true
     billboard.Parent = primaryPart
-
     local nameLabel = Instance.new("TextLabel")
     nameLabel.Text = name
-    nameLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
-    nameLabel.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+    nameLabel.TextColor3 = Color3.new(1, 1, 1)
+    nameLabel.BackgroundColor3 = Color3.new(0, 0, 0)
     nameLabel.Size = UDim2.new(1, 0, 1, 0)
     nameLabel.Parent = billboard
+    table.insert(espObjects[instance], billboard)
 end
 
 local function removeESP(instance)
-    if not instance then return end
-
-    -- Check if the instance is a Model or BasePart
-    local primaryPart = instance:IsA("Model") and instance.PrimaryPart or instance:IsA("BasePart") and instance
-    if not primaryPart then return end
-
-    -- Remove ESP box and label
-    for _, child in pairs(primaryPart:GetChildren()) do
-        if child:IsA("BoxHandleAdornment") or child:IsA("BillboardGui") then
-            child:Destroy()
+    if espObjects[instance] then
+        for _, obj in pairs(espObjects[instance]) do
+            if obj and obj.Parent then
+                obj:Destroy()
+            end
         end
+        espObjects[instance] = nil
     end
 end
 
--- Function to check if an object should have ESP
 local function shouldHaveESP(obj)
-    -- Add the names of objects you want to track
-    local trackedNames = {"Book", "Door", "Key", "Item", "NewObject"} -- Add more names as needed
+    local trackedNames = {"Book", "Door", "Key", "Item", "NewObject"}
     for _, name in pairs(trackedNames) do
         if obj.Name == name then
             return true
@@ -393,9 +388,8 @@ local function shouldHaveESP(obj)
     return false
 end
 
--- Update ESP for all objects
 local function updateESP()
-    -- Update ESP for players
+    -- Players
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer then
             local character = player.Character
@@ -409,7 +403,7 @@ local function updateESP()
         end
     end
 
-    -- Update ESP for objects (books, doors, keys, etc.)
+    -- Objects
     for _, obj in pairs(workspace:GetDescendants()) do
         if (obj:IsA("Model") or obj:IsA("BasePart")) and shouldHaveESP(obj) then
             if espEnabled then
@@ -421,23 +415,18 @@ local function updateESP()
     end
 end
 
--- Listen for new objects to add ESP
 workspace.DescendantAdded:Connect(function(obj)
-    if (obj:IsA("Model") or obj:IsA("BasePart")) and shouldHaveESP(obj) then
-        if espEnabled then
-            createESP(obj, obj.Name)
-        end
+    if espEnabled and (obj:IsA("Model") or obj:IsA("BasePart")) and shouldHaveESP(obj) then
+        createESP(obj, obj.Name)
     end
 end)
 
--- Listen for removed objects to remove ESP
 workspace.DescendantRemoving:Connect(function(obj)
-    if (obj:IsA("Model") or obj:IsA("BasePart")) and shouldHaveESP(obj) then
+    if espEnabled and (obj:IsA("Model") or obj:IsA("BasePart")) and shouldHaveESP(obj) then
         removeESP(obj)
     end
 end)
 
--- ESP Toggle
 characterChannel:Toggle(getText("esp"), false, function(value)
     espEnabled = value
     updateESP()
@@ -445,6 +434,9 @@ characterChannel:Toggle(getText("esp"), false, function(value)
         DiscordLib:Notification(getText("notification"), getText("espEnabled"), getText("confirm"))
     else
         DiscordLib:Notification(getText("notification"), getText("espDisabled"), getText("confirm"))
+        for instance in pairs(espObjects) do
+            removeESP(instance)
+        end
     end
 end)
 
@@ -464,17 +456,17 @@ RunService.RenderStepped:Connect(function()
         if Lighting.Ambient ~= Color3.fromRGB(255, 255, 255) then
             Lighting.Ambient = Color3.fromRGB(255, 255, 255)
         end
-        if not Lighting:FindFirstChild("ColorCorrection") then
-            local colorCorrection = Instance.new("ColorCorrectionEffect")
+        local colorCorrection = Lighting:FindFirstChild("ColorCorrection")
+        if not colorCorrection then
+            colorCorrection = Instance.new("ColorCorrectionEffect")
             colorCorrection.Name = "ColorCorrection"
             colorCorrection.Parent = Lighting
-            colorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
-        elseif Lighting.ColorCorrection.TintColor ~= Color3.fromRGB(255, 255, 255) then
-            Lighting.ColorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
         end
+        colorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
     end
-    -- Force FOV update
-    Camera.FieldOfView = lockedFOV
+    if fovLocked and Camera.FieldOfView ~= lockedFOV then
+        Camera.FieldOfView = lockedFOV
+    end
 end)
 
 -- Reset buttons with initial values
@@ -538,9 +530,6 @@ RunService.Heartbeat:Connect(function()
     if speedLocked and Humanoid and Humanoid.WalkSpeed ~= lockedSpeed then
         Humanoid.WalkSpeed = lockedSpeed
     end
-    if fovLocked and Camera.FieldOfView ~= lockedFOV then
-        Camera.FieldOfView = lockedFOV
-    end
 end)
 
 -- Update character reference when respawning
@@ -556,7 +545,9 @@ LocalPlayer.CharacterAdded:Connect(function(newCharacter)
         end
     end
     -- Reapply wallhack if enabled on respawn
-    updateWallHack(Character)
+    if wallHackEnabled then
+        updateWallHack(Character)
+    end
     -- Reapply ESP if enabled on respawn
     if espEnabled then
         updateESP()
@@ -574,23 +565,22 @@ end)
 
 -- Update ESP when a player leaves
 Players.PlayerRemoving:Connect(function(player)
-    if player.Character then
+    if espEnabled and player.Character then
         removeESP(player.Character)
     end
 end)
 
 -- Initial ESP update for existing players and objects
-for _, player in pairs(Players:GetPlayers()) do
-    if player ~= LocalPlayer and player.Character then
-        if espEnabled then
+RunService.Stepped:Wait() -- Ensure workspace is loaded before initial scan
+if espEnabled then
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
             createESP(player.Character, player.Name)
         end
     end
-end
 
-for _, obj in pairs(workspace:GetDescendants()) do
-    if (obj:IsA("Model") or obj:IsA("BasePart")) and shouldHaveESP(obj) then
-        if espEnabled then
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if (obj:IsA("Model") or obj:IsA("BasePart")) and shouldHaveESP(obj) then
             createESP(obj, obj.Name)
         end
     end
