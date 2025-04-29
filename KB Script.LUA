@@ -1,1 +1,605 @@
-local a=loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/discord"))()local b=game:GetService("Players")local c=b.LocalPlayer local d=c.Character or c.CharacterAdded:Wait()local e=d:WaitForChild("Humanoid")local f=workspace.CurrentCamera local g=game:GetService("Lighting")local h=game:GetService("RunService")local i=game:GetService("UserInputService")local j=game:GetService("HttpService")local k={ws=nil,fov=nil,br=nil,am=nil,cc=nil}local l=false local m=false local n=false local o=16 local p=70 local q=false local r=false local s=false local function t()if e then k.ws=e.WalkSpeed end k.fov=f.FieldOfView k.br=g.Brightness k.am=g.Ambient if g:FindFirstChild("ColorCorrection") then k.cc=g.ColorCorrection:Clone()end end t()local function u(v)if writefile then pcall(function()writefile("KBScriptLang.json",j:JSONEncode(v))end)end end local w={chinese={windowTitle="KB Script",mainSettings="主要设置",characterSettings="角色设置",walkSpeedSettings="行走速度设置",fovSettings="视场角(FOV)设置",inputSpeedPrompt="输入速度值 (0-100)",inputFovPrompt="输入FOV值 (10-120)",resetSpeedButton="重置速度到初始值",resetFovButton="重置FOV到初始值",presets="预设配置",raceSpeed="竞赛速度 (32)",slowMode="慢速模式 (8)",wideAngleFov="广角FOV (90)",competitiveFov="竞技FOV (80)",nightVision="夜视功能",wallHack="穿墙功能",infiniteJump="无限跳跃",esp="透视功能",info="信息",creator="制作者: ",version="当前版本: ",updateTime="更新时间: ",notification="通知",error="错误",confirm="确定",speedSetTo="速度已设置为: ",fovSetTo="FOV已设置为: ",speedReset="速度已重置到初始值",fovReset="FOV已重置到初始值",nightVisionEnabled="夜视功能已启用",nightVisionDisabled="夜视功能已禁用",invalidSpeed="请输入0-100之间的有效数值",invalidFov="请输入10-120之间的有效数值",speedRaceMode="速度已设置为竞赛模式 (32)",speedSlowMode="速度已设置为慢速模式 (8)",fovWideMode="FOV已设置为广角模式 (90)",fovCompMode="FOV已设置为竞技模式 (80)",wallHackEnabled="穿墙功能已启用",wallHackDisabled="穿墙功能已禁用",infiniteJumpEnabled="无限跳跃已启用",infiniteJumpDisabled="无限跳跃已禁用",espEnabled="透视功能已启用",espDisabled="透视功能已禁用",language="语言",lockSpeed="锁定速度",lockFov="锁定FOV",speedLocked="速度已锁定",speedUnlocked="速度已解锁",fovLocked="FOV已锁定",fovUnlocked="FOV已解锁"},english={windowTitle="KB Script",mainSettings="Main Settings",characterSettings="Character Settings",walkSpeedSettings="Walk Speed Settings",fovSettings="Field of View (FOV) Settings",inputSpeedPrompt="Enter Speed (0-100)",inputFovPrompt="Enter FOV (10-120)",resetSpeedButton="Reset Speed to Initial",resetFovButton="Reset FOV to Initial",presets="Presets",raceSpeed="Race Speed (32)",slowMode="Slow Mode (8)",wideAngleFov="Wide Angle FOV (90)",competitiveFov="Competitive FOV (80)",nightVision="Night Vision",wallHack="Wall Hack",infiniteJump="Infinite Jump",esp="ESP",info="Information",creator="Creator: ",version="Version",updateTime="Update Time",notification="Notification",error="Error",confirm="OK",speedSetTo="Speed set to: ",fovSetTo="FOV set to: ",speedReset="Speed reset to initial value",fovReset="FOV reset to initial value",nightVisionEnabled="Night Vision Enabled",nightVisionDisabled="Night Vision Disabled",invalidSpeed="Please enter a valid number between 0-100",invalidFov="Please enter a valid number between 10-120",speedRaceMode="Speed set to race mode (32)",speedSlowMode="Speed set to slow mode (8)",fovWideMode="FOV set to wide angle mode (90)",fovCompMode="FOV set to competitive mode (80)",wallHackEnabled="Wall Hack Enabled",wallHackDisabled="Wall Hack Disabled",infiniteJumpEnabled="Infinite Jump Enabled",infiniteJumpDisabled="Infinite Jump Disabled",espEnabled="ESP Enabled",espDisabled="ESP Disabled",language="Language",lockSpeed="Lock Speed",lockFov="Lock FOV",speedLocked="Speed Locked",speedUnlocked="Speed Unlocked",fovLocked="FOV Locked",fovUnlocked="FOV Unlocked"}}local x="chinese"local y=nil if readfile then pcall(function()y=j:JSONDecode(readfile("KBScriptLang.json"))end)end if y then x=y else local z=c:GetAttribute("KBScriptLang")if z then pcall(function()x=j:JSONDecode(z)end)end end local function A(B)return w[x][B]end local C=a:Window(A("windowTitle"))local D=C:Server(A("mainSettings"),"")local E=D:Channel(A("characterSettings"))local F=D:Channel(A("language"))local function G(H)x=H c:SetAttribute("KBScriptLang",j:JSONEncode(x))u(x)a:Notification(A("notification"),"Language set to "..H,A("confirm"))C:Refresh()end F:Button("English",function()G("english")end)F:Button("中文",function()G("chinese")end)E:Label(A("walkSpeedSettings"))E:Textbox(A("inputSpeedPrompt"),"",false,function(H)if l then return end local I=tonumber(H)if I and I>=0 and I<=100 then if e then e.WalkSpeed=I o=I end a:Notification(A("notification"),A("speedSetTo")..I,A("confirm"))else a:Notification(A("error"),A("invalidSpeed"),A("confirm"))end end)E:Label(A("fovSettings"))E:Textbox(A("inputFovPrompt"),"",false,function(H)if m then return end local I=tonumber(H)if I and I>=10 and I<=120 then f.FieldOfView=I p=I a:Notification(A("notification"),A("fovSetTo")..I,A("confirm"))else a:Notification(A("error"),A("invalidFov"),A("confirm"))end end)E:Toggle(A("lockSpeed"),false,function(H)l=H if l then o=e.WalkSpeed a:Notification(A("notification"),A("speedLocked"),A("confirm"))else a:Notification(A("notification"),A("speedUnlocked"),A("confirm"))end end)E:Toggle(A("lockFov"),false,function(H)m=H if m then p=f.FieldOfView a:Notification(A("notification"),A("fovLocked"),A("confirm"))else a:Notification(A("notification"),A("fovUnlocked"),A("confirm"))end end)E:Toggle(A("nightVision"),false,function(H)n=H if n then g.Brightness=2 g.Ambient=Color3.fromRGB(255,255,255)if not g:FindFirstChild("ColorCorrection")then local I=Instance.new("ColorCorrectionEffect")I.Name="ColorCorrection"I.Parent=g end g.ColorCorrection.TintColor=Color3.fromRGB(255,255,255)a:Notification(A("notification"),A("nightVisionEnabled"),A("confirm"))else g.Brightness=k.br g.Ambient=k.am if g:FindFirstChild("ColorCorrection")then g.ColorCorrection:Destroy()end if k.cc then k.cc.Parent=g end a:Notification(A("notification"),A("nightVisionDisabled"),A("confirm"))end end)local function J(K)if K and K:FindFirstChild("HumanoidRootPart")then for _,L in pairs(K:GetDescendants())do if L:IsA("BasePart")and L.Name~="HumanoidRootPart"then L.CanCollide=not q end end end end E:Toggle(A("wallHack"),false,function(H)q=H if c.Character then J(c.Character)end a:Notification(A("notification"),A("wallHackEnabled"),A("confirm"))end)E:Toggle(A("infiniteJump"),false,function(H)r=H if r then a:Notification(A("notification"),A("infiniteJumpEnabled"),A("confirm"))else a:Notification(A("notification"),A("infiniteJumpDisabled"),A("confirm"))end end)local M={}local function N(K,L)if not K then return end local O=K:IsA("Model")and K.PrimaryPart or K:IsA("BasePart")and K if not O then return end local P=Instance.new("BoxHandleAdornment")P.Size=O.Size+Vector3.new(0.1,0.1,0.1)P.Adornee=O P.AlwaysOnTop=true P.ZIndex=10 P.Transparency=0.5 P.Color3=Color3.new(1,0,0)P.Parent=O M[K]={P}local Q=Instance.new("BillboardGui")Q.Adornee=O Q.Size=UDim2.new(0,200,0,50)Q.StudsOffset=Vector3.new(0,2,0)Q.AlwaysOnTop=true Q.Parent=O local R=Instance.new("TextLabel")R.Text=L R.TextColor3=Color3.new(1,1,1)R.BackgroundColor3=Color3.new(0,0,0)R.Size=UDim2.new(1,0,1,0)R.Parent=Q table.insert(M[K],Q)end local function S(K)if M[K]then for _,L in pairs(M[K])do if L and L.Parent then L:Destroy()end end M[K]=nil end end local function T(K)local U={"Book","Door","Key","Item","NewObject"}for _,L in pairs(U)do if K.Name==L then return true end end return false end local function V()for _,K in pairs(b:GetPlayers())do if K~=c then local L=K.Character if L then if s then N(L,K.Name)else S(L)end end end end for _,K in pairs(workspace:GetDescendants())do if(K:IsA("Model")or K:IsA("BasePart"))and T(K)then if s then N(K,K.Name)else S(K)end end end end workspace.DescendantAdded:Connect(function(K)if s and(K:IsA("Model")or K:IsA("BasePart"))and T(K)then N(K,K.Name)end end)workspace.DescendantRemoving:Connect(function(K)if s and(K:IsA("Model")or K:IsA("BasePart"))and T(K)then S(K)end end)E:Toggle(A("esp"),false,function(H)s=H V()if s then a:Notification(A("notification"),A("espEnabled"),A("confirm"))else a:Notification(A("notification"),A("espDisabled"),A("confirm"))for K in pairs(M)do S(K)end end end)i.JumpRequest:Connect(function()if r and e then e:ChangeState(Enum.HumanoidStateType.Jumping)end end)h.PreRender:Connect(function()if m and f.FieldOfView~=p then f.FieldOfView=p end if not m and f.FieldOfView~=p then f.FieldOfView=p end end)h.Heartbeat:Connect(function()if n then if g.Brightness~=2 then g.Brightness=2 end if g.Ambient~=Color3.fromRGB(255,255,255)then g.Ambient=Color3.fromRGB(255,255,255)end local I=g:FindFirstChild("ColorCorrection")if not I then I=Instance.new("ColorCorrectionEffect")I.Name="ColorCorrection"I.Parent=g end I.TintColor=Color3.fromRGB(255,255,255)end if l and e and e.WalkSpeed~=o then e.WalkSpeed=o end end)E:Button(A("resetSpeedButton"),function()if l then return end if e and k.ws then e.WalkSpeed=k.ws o=k.ws end a:Notification(A("notification"),A("speedReset"),A("confirm"))end)E:Button(A("resetFovButton"),function()if m then return end if k.fov then f.FieldOfView=k.fov p=k.fov end a:Notification(A("notification"),A("fovReset"),A("confirm"))end)local W=D:Channel(A("presets"))W:Button(A("raceSpeed"),function()if l then return end if e then e.WalkSpeed=32 o=32 end a:Notification(A("notification"),A("speedRaceMode"),A("confirm"))end)W:Button(A("slowMode"),function()if l then return end if e then e.WalkSpeed=8 o=8 end a:Notification(A("notification"),A("speedSlowMode"),A("confirm"))end)W:Button(A("wideAngleFov"),function()if m then return end f.FieldOfView=90 p=90 a:Notification(A("notification"),A("fovWideMode"),A("confirm"))end)W:Button(A("competitiveFov"),function()if m then return end f.FieldOfView=80 p=80 a:Notification(A("notification"),A("fovCompMode"),A("confirm"))end)local X=D:Channel(A("info"))X:Label(A("creator").."Baloksxin")X:Label(A("version").."v1.1.0")X:Label(A("updateTime").."2025-03-02 01:00:14")h.Heartbeat:Connect(function()if l and e and e.WalkSpeed~=o then e.WalkSpeed=o end end)c.CharacterAdded:Connect(function(K)d=K e=d:WaitForChild("Humanoid")if not k.ws then t()end if e then if l then e.WalkSpeed=o end end if q then J(d)end if s then V()end end)b.PlayerAdded:Connect(function(K)K.CharacterAdded:Connect(function(L)if s then N(L,K.Name)end end)end)b.PlayerRemoving:Connect(function(K)if s and K.Character then S(K.Character)end end)h.Stepped:Wait()if s then for _,K in pairs(b:GetPlayers())do if K~=c and K.Character then N(K.Character,K.Name)end end for _,K in pairs(workspace:GetDescendants())do if(K:IsA("Model")or K:IsA("BasePart"))and T(K)then N(K,K.Name)end end end i.InputBegan:Connect(function(I,Y)if not Y then if I.KeyCode==Enum.KeyCode.RightShift then C:Toggle()end end end)
+-- Discord UI Library
+local DiscordLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/discord"))()
+
+-- Services
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+local Camera = workspace.CurrentCamera
+local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
+
+-- Initial Values Storage
+local initialValues = {
+    walkSpeed = nil,
+    fieldOfView = nil,
+    brightness = nil,
+    ambient = nil,
+    colorCorrection = nil
+}
+
+-- Lock Status Variables
+local speedLocked = false
+local fovLocked = false
+local nightVisionEnabled = false
+local lockedSpeed = 16
+local lockedFOV = 70
+
+-- Wallhack Status Variable
+local wallHackEnabled = false
+
+-- Infinite Jump Status Variable
+local infiniteJumpEnabled = false
+
+-- ESP Status Variable
+local espEnabled = false
+
+-- Store initial values when character loads
+local function storeInitialValues()
+    if Humanoid then
+        initialValues.walkSpeed = Humanoid.WalkSpeed
+    end
+    initialValues.fieldOfView = Camera.FieldOfView
+    initialValues.brightness = Lighting.Brightness
+    initialValues.ambient = Lighting.Ambient
+    if Lighting:FindFirstChild("ColorCorrection") then
+        initialValues.colorCorrection = Lighting.ColorCorrection:Clone()
+    end
+end
+
+storeInitialValues()
+
+-- Auto-save function to persist language settings in the injector's local folder
+local function autoSaveLanguage(lang)
+    if writefile then
+        pcall(function()
+            writefile("KBScriptLang.json", HttpService:JSONEncode(lang))
+        end)
+    end
+end
+
+-- Language Settings
+local language = {
+    chinese = {
+        windowTitle = "KB Script",
+        mainSettings = "主要设置",
+        characterSettings = "角色设置",
+        walkSpeedSettings = "行走速度设置",
+        fovSettings = "视场角(FOV)设置",
+        inputSpeedPrompt = "输入速度值 (0-100)",
+        inputFovPrompt = "输入FOV值 (10-120)",
+        resetSpeedButton = "重置速度到初始值",
+        resetFovButton = "重置FOV到初始值",
+        presets = "预设配置",
+        raceSpeed = "竞赛速度 (32)",
+        slowMode = "慢速模式 (8)",
+        wideAngleFov = "广角FOV (90)",
+        competitiveFov = "竞技FOV (80)",
+        nightVision = "夜视功能",
+        wallHack = "穿墙功能",
+        infiniteJump = "无限跳跃",
+        esp = "透视功能",
+        info = "信息",
+        creator = "制作者: ",
+        version = "当前版本: ",
+        updateTime = "更新时间: ",
+        notification = "通知",
+        error = "错误",
+        confirm = "确定",
+        speedSetTo = "速度已设置为: ",
+        fovSetTo = "FOV已设置为: ",
+        speedReset = "速度已重置到初始值",
+        fovReset = "FOV已重置到初始值",
+        nightVisionEnabled = "夜视功能已启用",
+        nightVisionDisabled = "夜视功能已禁用",
+        invalidSpeed = "请输入0-100之间的有效数值",
+        invalidFov = "请输入10-120之间的有效数值",
+        speedRaceMode = "速度已设置为竞赛模式 (32)",
+        speedSlowMode = "速度已设置为慢速模式 (8)",
+        fovWideMode = "FOV已设置为广角模式 (90)",
+        fovCompMode = "FOV已设置为竞技模式 (80)",
+        wallHackEnabled = "穿墙功能已启用",
+        wallHackDisabled = "穿墙功能已禁用",
+        infiniteJumpEnabled = "无限跳跃已启用",
+        infiniteJumpDisabled = "无限跳跃已禁用",
+        espEnabled = "透视功能已启用",
+        espDisabled = "透视功能已禁用",
+        language = "语言",
+        lockSpeed = "锁定速度",
+        lockFov = "锁定FOV",
+        speedLocked = "速度已锁定",
+        speedUnlocked = "速度已解锁",
+        fovLocked = "FOV已锁定",
+        fovUnlocked = "FOV已解锁"
+    },
+    english = {
+        windowTitle = "KB Script",
+        mainSettings = "Main Settings",
+        characterSettings = "Character Settings",
+        walkSpeedSettings = "Walk Speed Settings",
+        fovSettings = "Field of View (FOV) Settings",
+        inputSpeedPrompt = "Enter Speed (0-100)",
+        inputFovPrompt = "Enter FOV (10-120)",
+        resetSpeedButton = "Reset Speed to Initial",
+        resetFovButton = "Reset FOV to Initial",
+        presets = "Presets",
+        raceSpeed = "Race Speed (32)",
+        slowMode = "Slow Mode (8)",
+        wideAngleFov = "Wide Angle FOV (90)",
+        competitiveFov = "Competitive FOV (80)",
+        nightVision = "Night Vision",
+        wallHack = "Wall Hack",
+        infiniteJump = "Infinite Jump",
+        esp = "ESP",
+        info = "Information",
+        creator = "Creator: ",
+        version = "Version",
+        updateTime = "Update Time",
+        notification = "Notification",
+        error = "Error",
+        confirm = "OK",
+        speedSetTo = "Speed set to: ",
+        fovSetTo = "FOV set to: ",
+        speedReset = "Speed reset to initial value",
+        fovReset = "FOV reset to initial value",
+        nightVisionEnabled = "Night Vision Enabled",
+        nightVisionDisabled = "Night Vision Disabled",
+        invalidSpeed = "Please enter a valid number between 0-100",
+        invalidFov = "Please enter a valid number between 10-120",
+        speedRaceMode = "Speed set to race mode (32)",
+        speedSlowMode = "Speed set to slow mode (8)",
+        fovWideMode = "FOV set to wide angle mode (90)",
+        fovCompMode = "FOV set to competitive mode (80)",
+        wallHackEnabled = "Wall Hack Enabled",
+        wallHackDisabled = "Wall Hack Disabled",
+        infiniteJumpEnabled = "Infinite Jump Enabled",
+        infiniteJumpDisabled = "Infinite Jump Disabled",
+        espEnabled = "ESP Enabled",
+        espDisabled = "ESP Disabled",
+        language = "Language",
+        lockSpeed = "Lock Speed",
+        lockFov = "Lock FOV",
+        speedLocked = "Speed Locked",
+        speedUnlocked = "Speed Unlocked",
+        fovLocked = "FOV Locked",
+        fovUnlocked = "FOV Unlocked"
+    }
+}
+
+local currentLang = "chinese"
+local savedLang = nil
+
+-- Try to read the saved language from the local file first
+if readfile then
+    pcall(function()
+        savedLang = HttpService:JSONDecode(readfile("KBScriptLang.json"))
+    end)
+end
+
+if savedLang then
+    currentLang = savedLang
+else
+    -- Fallback: use player's attribute, if available
+    local attr = LocalPlayer:GetAttribute("KBScriptLang")
+    if attr then
+        pcall(function()
+            currentLang = HttpService:JSONDecode(attr)
+        end)
+    end
+end
+
+local function getText(key)
+    return language[currentLang][key]
+end
+
+-- Create main window
+local window = DiscordLib:Window(getText("windowTitle"))
+
+-- Create main settings page
+local mainPage = window:Server(getText("mainSettings"), "")
+
+-- Create character settings channel
+local characterChannel = mainPage:Channel(getText("characterSettings"))
+
+-- Create language settings channel
+local languageChannel = mainPage:Channel(getText("language"))
+
+-- Helper function to update notifications and, if needed, other UI elements after language change.
+local function updateLanguage(newLang)
+    currentLang = newLang
+    LocalPlayer:SetAttribute("KBScriptLang", HttpService:JSONEncode(currentLang))
+    autoSaveLanguage(currentLang)
+    DiscordLib:Notification(getText("notification"), "Language set to " .. newLang, getText("confirm"))
+    -- Refresh UI elements
+    window:Refresh() -- Assuming DiscordLib has a refresh method
+end
+
+-- Language switcher button for English
+languageChannel:Button("English", function()
+    updateLanguage("english")
+end)
+
+-- Language switcher button for Chinese
+languageChannel:Button("中文", function()
+    updateLanguage("chinese")
+end)
+
+-- Speed settings section
+characterChannel:Label(getText("walkSpeedSettings"))
+characterChannel:Textbox(getText("inputSpeedPrompt"), "", false, function(value)
+    if speedLocked then return end
+    local speed = tonumber(value)
+    if speed and speed >= 0 and speed <= 100 then
+        if Humanoid then
+            Humanoid.WalkSpeed = speed
+            lockedSpeed = speed
+        end
+        DiscordLib:Notification(getText("notification"), getText("speedSetTo") .. speed, getText("confirm"))
+    else
+        DiscordLib:Notification(getText("error"), getText("invalidSpeed"), getText("confirm"))
+    end
+end)
+
+-- FOV settings section
+characterChannel:Label(getText("fovSettings"))
+characterChannel:Textbox(getText("inputFovPrompt"), "", false, function(value)
+    if fovLocked then return end
+    local fov = tonumber(value)
+    if fov and fov >= 10 and fov <= 120 then
+        Camera.FieldOfView = fov
+        lockedFOV = fov -- Update lockedFOV here
+        DiscordLib:Notification(getText("notification"), getText("fovSetTo") .. fov, getText("confirm"))
+    else
+        DiscordLib:Notification(getText("error"), getText("invalidFov"), getText("confirm"))
+    end
+end)
+
+-- Lock toggles
+characterChannel:Toggle(getText("lockSpeed"), false, function(value)
+    speedLocked = value
+    if speedLocked then
+        lockedSpeed = Humanoid.WalkSpeed
+        DiscordLib:Notification(getText("notification"), getText("speedLocked"), getText("confirm"))
+    else
+        DiscordLib:Notification(getText("notification"), getText("speedUnlocked"), getText("confirm"))
+    end
+end)
+
+characterChannel:Toggle(getText("lockFov"), false, function(value)
+    fovLocked = value
+    if fovLocked then
+        lockedFOV = Camera.FieldOfView
+        DiscordLib:Notification(getText("notification"), getText("fovLocked"), getText("confirm"))
+    else
+        DiscordLib:Notification(getText("notification"), getText("fovUnlocked"), getText("confirm"))
+    end
+end)
+
+-- Night vision toggle
+characterChannel:Toggle(getText("nightVision"), false, function(value)
+    nightVisionEnabled = value
+    if nightVisionEnabled then
+        Lighting.Brightness = 2
+        Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+        if not Lighting:FindFirstChild("ColorCorrection") then
+            local colorCorrection = Instance.new("ColorCorrectionEffect")
+            colorCorrection.Name = "ColorCorrection"
+            colorCorrection.Parent = Lighting
+        end
+        Lighting.ColorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
+        DiscordLib:Notification(getText("notification"), getText("nightVisionEnabled"), getText("confirm"))
+    else
+        Lighting.Brightness = initialValues.brightness
+        Lighting.Ambient = initialValues.ambient
+        if Lighting:FindFirstChild("ColorCorrection") then
+            Lighting.ColorCorrection:Destroy()
+        end
+        if initialValues.colorCorrection then
+            initialValues.colorCorrection.Parent = Lighting
+        end
+        DiscordLib:Notification(getText("notification"), getText("nightVisionDisabled"), getText("confirm"))
+    end
+end)
+
+-- Wall Hack toggle
+local function updateWallHack(character)
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                part.CanCollide = not wallHackEnabled
+            end
+        end
+    end
+end
+
+characterChannel:Toggle(getText("wallHack"), false, function(value)
+    wallHackEnabled = value
+    if LocalPlayer.Character then
+        updateWallHack(LocalPlayer.Character)
+    end
+    DiscordLib:Notification(getText("notification"), getText("wallHackEnabled"), getText("confirm"))
+end)
+
+-- Infinite Jump toggle
+characterChannel:Toggle(getText("infiniteJump"), false, function(value)
+    infiniteJumpEnabled = value
+    if infiniteJumpEnabled then
+        DiscordLib:Notification(getText("notification"), getText("infiniteJumpEnabled"), getText("confirm"))
+    else
+        DiscordLib:Notification(getText("notification"), getText("infiniteJumpDisabled"), getText("confirm"))
+    end
+end)
+
+-- ESP Function
+local espObjects = {}
+
+local function createESP(instance, name)
+    if not instance then return end
+
+    local primaryPart = instance:IsA("Model") and instance.PrimaryPart or instance:IsA("BasePart") and instance
+    if not primaryPart then return end
+
+    local box = Instance.new("BoxHandleAdornment")
+    box.Size = primaryPart.Size + Vector3.new(0.1, 0.1, 0.1)
+    box.Adornee = primaryPart
+    box.AlwaysOnTop = true
+    box.ZIndex = 10
+    box.Transparency = 0.5
+    box.Color3 = Color3.new(1, 0, 0)
+    box.Parent = primaryPart
+    espObjects[instance] = {box}
+
+    local billboard = Instance.new("BillboardGui")
+    billboard.Adornee = primaryPart
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 2, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Parent = primaryPart
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Text = name
+    nameLabel.TextColor3 = Color3.new(1, 1, 1)
+    nameLabel.BackgroundColor3 = Color3.new(0, 0, 0)
+    nameLabel.Size = UDim2.new(1, 0, 1, 0)
+    nameLabel.Parent = billboard
+    table.insert(espObjects[instance], billboard)
+end
+
+local function removeESP(instance)
+    if espObjects[instance] then
+        for _, obj in pairs(espObjects[instance]) do
+            if obj and obj.Parent then
+                obj:Destroy()
+            end
+        end
+        espObjects[instance] = nil
+    end
+end
+
+local function shouldHaveESP(obj)
+    local trackedNames = {"Book", "Door", "Key", "Item", "NewObject"}
+    for _, name in pairs(trackedNames) do
+        if obj.Name == name then
+            return true
+        end
+    end
+    return false
+end
+
+local function updateESP()
+    -- Players
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local character = player.Character
+            if character then
+                if espEnabled then
+                    createESP(character, player.Name)
+                else
+                    removeESP(character)
+                end
+            end
+        end
+    end
+
+    -- Objects
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if (obj:IsA("Model") or obj:IsA("BasePart")) and shouldHaveESP(obj) then
+            if espEnabled then
+                createESP(obj, obj.Name)
+            else
+                removeESP(obj)
+            end
+        end
+    end
+end
+
+workspace.DescendantAdded:Connect(function(obj)
+    if espEnabled and (obj:IsA("Model") or obj:IsA("BasePart")) and shouldHaveESP(obj) then
+        createESP(obj, obj.Name)
+    end
+end)
+
+workspace.DescendantRemoving:Connect(function(obj)
+    if espEnabled and (obj:IsA("Model") or obj:IsA("BasePart")) and shouldHaveESP(obj) then
+        removeESP(obj)
+    end
+end)
+
+characterChannel:Toggle(getText("esp"), false, function(value)
+    espEnabled = value
+    updateESP()
+    if espEnabled then
+        DiscordLib:Notification(getText("notification"), getText("espEnabled"), getText("confirm"))
+    else
+        DiscordLib:Notification(getText("notification"), getText("espDisabled"), getText("confirm"))
+        for instance in pairs(espObjects) do
+            removeESP(instance)
+        end
+    end
+end)
+
+-- Listen for jump requests to implement infinite jump
+UserInputService.JumpRequest:Connect(function()
+    if infiniteJumpEnabled and Humanoid then
+        Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+-- Continuous application of night vision settings and FOV
+RunService.PreRender:Connect(function()
+    if fovLocked and Camera.FieldOfView ~= lockedFOV then
+        Camera.FieldOfView = lockedFOV
+    end
+    if not fovLocked and Camera.FieldOfView ~= lockedFOV then
+        Camera.FieldOfView = lockedFOV
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    if nightVisionEnabled then
+        if Lighting.Brightness ~= 2 then
+            Lighting.Brightness = 2
+        end
+        if Lighting.Ambient ~= Color3.fromRGB(255, 255, 255) then
+            Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+        end
+        local colorCorrection = Lighting:FindFirstChild("ColorCorrection")
+        if not colorCorrection then
+            colorCorrection = Instance.new("ColorCorrectionEffect")
+            colorCorrection.Name = "ColorCorrection"
+            colorCorrection.Parent = Lighting
+        end
+        colorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
+    end
+    if speedLocked and Humanoid and Humanoid.WalkSpeed ~= lockedSpeed then
+        Humanoid.WalkSpeed = lockedSpeed
+    end
+end)
+
+-- Reset buttons with initial values
+characterChannel:Button(getText("resetSpeedButton"), function()
+    if speedLocked then return end
+    if Humanoid and initialValues.walkSpeed then
+        Humanoid.WalkSpeed = initialValues.walkSpeed
+        lockedSpeed = initialValues.walkSpeed
+    end
+    DiscordLib:Notification(getText("notification"), getText("speedReset"), getText("confirm"))
+end)
+
+characterChannel:Button(getText("resetFovButton"), function()
+    if fovLocked then return end
+    if initialValues.fieldOfView then
+        Camera.FieldOfView = initialValues.fieldOfView
+        lockedFOV = initialValues.fieldOfView
+    end
+    DiscordLib:Notification(getText("notification"), getText("fovReset"), getText("confirm"))
+end)
+
+-- Presets channel
+local presetsChannel = mainPage:Channel(getText("presets"))
+presetsChannel:Button(getText("raceSpeed"), function()
+    if speedLocked then return end
+    if Humanoid then
+        Humanoid.WalkSpeed = 32
+        lockedSpeed = 32
+    end
+    DiscordLib:Notification(getText("notification"), getText("speedRaceMode"), getText("confirm"))
+end)
+presetsChannel:Button(getText("slowMode"), function()
+    if speedLocked then return end
+    if Humanoid then
+        Humanoid.WalkSpeed = 8
+        lockedSpeed = 8
+    end
+    DiscordLib:Notification(getText("notification"), getText("speedSlowMode"), getText("confirm"))
+end)
+presetsChannel:Button(getText("wideAngleFov"), function()
+    if fovLocked then return end
+    Camera.FieldOfView = 90
+    lockedFOV = 90 -- Update lockedFOV here
+    DiscordLib:Notification(getText("notification"), getText("fovWideMode"), getText("confirm"))
+end)
+presetsChannel:Button(getText("competitiveFov"), function()
+    if fovLocked then return end
+    Camera.FieldOfView = 80
+    lockedFOV = 80 -- Update lockedFOV here
+    DiscordLib:Notification(getText("notification"), getText("fovCompMode"), getText("confirm"))
+end)
+
+-- Info channel
+local infoChannel = mainPage:Channel(getText("info"))
+infoChannel:Label(getText("creator") .. "Baloksxin")
+infoChannel:Label(getText("version") .. "v1.1.0")
+infoChannel:Label(getText("updateTime") .. "2025-03-02 01:00:14")
+
+-- Update locks periodically
+RunService.Heartbeat:Connect(function()
+    if speedLocked and Humanoid and Humanoid.WalkSpeed ~= lockedSpeed then
+        Humanoid.WalkSpeed = lockedSpeed
+    end
+end)
+
+-- Update character reference when respawning
+LocalPlayer.CharacterAdded:Connect(function(newCharacter)
+    Character = newCharacter
+    Humanoid = Character:WaitForChild("Humanoid")
+    if not initialValues.walkSpeed then
+        storeInitialValues()
+    end
+    if Humanoid then
+        if speedLocked then
+            Humanoid.WalkSpeed = lockedSpeed
+        end
+    end
+    -- Reapply wallhack if enabled on respawn
+    if wallHackEnabled then
+        updateWallHack(Character)
+    end
+    -- Reapply ESP if enabled on respawn
+    if espEnabled then
+        updateESP()
+    end
+end)
+
+-- Update ESP when a player's character is added
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        if espEnabled then
+            createESP(character, player.Name)
+        end
+    end)
+end)
+
+-- Update ESP when a player leaves
+Players.PlayerRemoving:Connect(function(player)
+    if espEnabled and player.Character then
+        removeESP(player.Character)
+    end
+end)
+
+-- Initial ESP update for existing players and objects
+RunService.Stepped:Wait() -- Ensure workspace is loaded before initial scan
+if espEnabled then
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            createESP(player.Character, player.Name)
+        end
+    end
+
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if (obj:IsA("Model") or obj:IsA("BasePart")) and shouldHaveESP(obj) then
+            createESP(obj, obj.Name)
+        end
+    end
+end
+
+-- Shortcut key support to toggle the main window with RightShift
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed then
+        if input.KeyCode == Enum.KeyCode.RightShift then
+            window:Toggle()
+        end
+    end
+end)
